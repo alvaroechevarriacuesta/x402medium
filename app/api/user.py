@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from app.clients.medium.user import get_user_by_username as fetch_user_by_username
 from app.clients.medium.user import get_user_articles as fetch_user_articles
 from app.clients.medium.user import get_user_info as fetch_user_info
