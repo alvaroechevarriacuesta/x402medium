@@ -19,6 +19,8 @@ facilitator_config = FacilitatorConfig(url=FACILITATOR_URL)
 
 
 def apply_payment_middleware(app: FastAPI):
+    # Collect all route configs first
+    route_configs = {}
     for route in app.routes:
         if isinstance(route, APIRoute) and hasattr(route.endpoint, "x402_config"):
             config = route.endpoint.x402_config
@@ -32,15 +34,16 @@ def apply_payment_middleware(app: FastAPI):
                     header_fields={},
                 )
 
-            app.middleware("http")(
-                require_payment(
-                    path=route.path,
-                    price=config["price"],
-                    pay_to_address=ADDRESS,
-                    network="base",
-                    description=config.get("description", ""),
-                    input_schema=input_schema,
-                    discoverable=False,
-                    facilitator_config=facilitator_config,
-                )
-            )
+            route_configs[route.path] = {
+                "price": config["price"],
+                "pay_to_address": ADDRESS,
+                "network": "base",
+                "description": config.get("description", ""),
+                "input_schema": input_schema,
+                "discoverable": False,
+                "facilitator_config": facilitator_config,
+            }
+
+    # Add a single middleware for all protected routes
+    for path, config in route_configs.items():
+        app.middleware("http")(require_payment(path=path, **config))
