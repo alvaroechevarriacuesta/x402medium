@@ -26,7 +26,10 @@ def apply_payment_middleware(app: FastAPI):
             input_schema = None
             if config.get("body_fields"):
                 input_schema = HTTPInputSchema(
-                    body_type="json", body_fields=config["body_fields"]
+                    body_type="json",
+                    body_fields=config["body_fields"],
+                    query_params={},
+                    header_fields={},
                 )
 
             app.middleware("http")(
