@@ -4,31 +4,30 @@ from fastapi.routing import APIRoute
 from dotenv import load_dotenv
 from x402.fastapi.middleware import require_payment
 from x402.facilitator import FacilitatorConfig
+from x402.types import HTTPInputSchema
 
 load_dotenv()
 
-# Get payment address (required)
+# Payment configuration
 ADDRESS = os.getenv("ADDRESS")
 if not ADDRESS:
-    raise ValueError("ADDRESS environment variable is required for payment middleware")
+    raise ValueError("ADDRESS environment variable is required for x402 payments")
 
-# Get facilitator URL (defaults to x402.org public facilitator)
 FACILITATOR_URL = os.getenv("FACILITATOR_URL", "https://facilitator.x402.org")
 
-# Create facilitator config
 facilitator_config = FacilitatorConfig(url=FACILITATOR_URL)
 
 
 def apply_payment_middleware(app: FastAPI):
-    """Extract payment config from decorated endpoints and apply middleware"""
     for route in app.routes:
         if isinstance(route, APIRoute) and hasattr(route.endpoint, "x402_config"):
             config = route.endpoint.x402_config
 
-            # Build output_schema with query params schema
-            output_schema = None
-            if config.get("query_params"):
-                output_schema = {"input": {"query_params": config["query_params"]}}
+            input_schema = None
+            if config.get("body_fields"):
+                input_schema = HTTPInputSchema(
+                    body_type="json", body_fields=config["body_fields"]
+                )
 
             app.middleware("http")(
                 require_payment(
@@ -37,7 +36,7 @@ def apply_payment_middleware(app: FastAPI):
                     pay_to_address=ADDRESS,
                     network="base",
                     description=config.get("description", ""),
-                    output_schema=output_schema,
+                    input_schema=input_schema,
                     discoverable=False,
                     facilitator_config=facilitator_config,
                 )

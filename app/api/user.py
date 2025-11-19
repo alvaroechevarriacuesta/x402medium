@@ -19,11 +19,11 @@ from app.core.middleware.payment import x402
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.get("/id_for")
+@router.post("/id_for")
 @x402(
     price="0.01",
     description="Get the user_id for a username on Medium",
-    query_params={
+    body_fields={
         "username": {
             "type": "string",
             "description": "The username of the user to get the user_id for",
@@ -32,8 +32,8 @@ router = APIRouter(prefix="/user", tags=["user"])
     },
 )
 async def get_user(request: Request):
-    params = request.query_params
-    username = params.get("username")
+    body = await request.json()
+    username = body.get("username")
     if username is None:
         raise HTTPException(status_code=400, detail="username is required")
     return await fetch_user_by_username(username)

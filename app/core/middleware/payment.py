@@ -5,8 +5,17 @@ from typing import Dict, Any, Optional
 def x402(
     price: str,
     description: str,
-    query_params: Optional[Dict[str, Any]] = None,
+    body_fields: Optional[Dict[str, Any]] = None,
 ):
+    """
+    Decorator to add x402 payment requirements to an endpoint
+
+    Args:
+        price: Payment price (e.g., "$0.001", "10000" for tokens)
+        description: Description of what is being purchased
+        body_fields: Schema for JSON body fields
+    """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -15,7 +24,7 @@ def x402(
         wrapper.x402_config = {
             "price": price,
             "description": description,
-            "query_params": query_params,
+            "body_fields": body_fields,
         }
         return wrapper
 
