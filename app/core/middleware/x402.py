@@ -40,7 +40,7 @@ def apply_payment_middleware(app: FastAPI):
                 "network": "base",
                 "description": config.get("description", ""),
                 "input_schema": input_schema,
-                "discoverable": False,
+                "discoverable": True,
                 "facilitator_config": facilitator_config,
             }
 
