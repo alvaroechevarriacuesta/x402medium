@@ -18,8 +18,8 @@ def x402(
 
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
 
         wrapper.x402_config = {
             "price": price,
