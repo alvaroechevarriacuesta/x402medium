@@ -1,4 +1,5 @@
 import os
+from typing import Callable
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from dotenv import load_dotenv
@@ -53,23 +54,33 @@ def apply_payment_middleware(app: FastAPI):
                 "facilitator_config": facilitator_config,
             }
 
-    # Create a single smart middleware that dynamically handles each route
-    class SmartPaymentMiddleware(BaseHTTPMiddleware):
-        async def dispatch(self, request: Request, call_next):
-            path = request.url.path
+    # Pre-create payment handlers for each route
+    payment_handlers = {}
+    for path, config in route_configs.items():
+        # require_payment returns a middleware function
+        payment_handlers[path] = require_payment(path=path, **config)
+
+    # Create ONE unified middleware that routes to appropriate payment handler
+    class UnifiedPaymentMiddleware:
+        def __init__(self, handlers: dict):
+            self.handlers = handlers
+
+        async def __call__(self, scope, receive, send):
+            if scope["type"] != "http":
+                # Not HTTP, skip
+                return await app.app(scope, receive, send)
+
+            path = scope["path"]
 
             # Check if this path requires payment
-            if path in route_configs:
-                config = route_configs[path]
-                # Create the payment middleware for THIS specific request
-                payment_middleware = require_payment(path=path, **config)
-                # Invoke it directly with the ASGI interface
-                return await payment_middleware(
-                    request.scope, request.receive, request._send
-                )
+            if path in self.handlers:
+                # Delegate to the specific payment handler for this path
+                handler = self.handlers[path]
+                return await handler(scope, receive, send)
 
-            # No payment required, continue normally
-            return await call_next(request)
+            # No payment required, continue to next middleware/handler
+            return await app.app(scope, receive, send)
 
-    # Register only ONE middleware instance
-    app.add_middleware(SmartPaymentMiddleware)
+    # Register ONE middleware instance that handles all routes
+    middleware_instance = UnifiedPaymentMiddleware(payment_handlers)
+    app.middleware("http")(middleware_instance)
