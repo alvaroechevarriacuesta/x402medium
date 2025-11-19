@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Callable
 from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute
@@ -6,6 +7,8 @@ from dotenv import load_dotenv
 from x402.fastapi.middleware import require_payment
 from x402.facilitator import FacilitatorConfig
 from x402.types import HTTPInputSchema
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -62,8 +65,27 @@ def apply_payment_middleware(app: FastAPI):
     async def x402_middleware(request: Request, call_next: Callable):
         path = request.url.path
 
+        # Log headers
+        logger.info(f"Request headers: {dict(request.headers)}")
+
+        # Log body - cache it so downstream middlewares can still read it
+        body = await request.body()
+        logger.info(f"Request body: {body.decode('utf-8') if body else 'Empty'}")
+
+        # Restore body so it can be read again
+        async def receive():
+            return {"type": "http.request", "body": body}
+
+        request._receive = receive
+
+        logger.info(f"Request path: {path}")
+
         if path in payment_handlers:
+            logger.info(
+                f"Path {path} requires payment, delegating to require_payment middleware"
+            )
             require_payment_middleware = payment_handlers[path]
             return await require_payment_middleware(request, call_next)
 
+        logger.info(f"Path {path} does not require payment, passing through")
         return await call_next(request)
