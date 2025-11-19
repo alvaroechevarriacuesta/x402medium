@@ -2,6 +2,8 @@ import os
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from dotenv import load_dotenv
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 from x402.fastapi.middleware import require_payment
 from x402.facilitator import FacilitatorConfig
 from x402.types import HTTPInputSchema
@@ -51,6 +53,23 @@ def apply_payment_middleware(app: FastAPI):
                 "facilitator_config": facilitator_config,
             }
 
-    # Add a single middleware for all protected routes
-    for path, config in route_configs.items():
-        app.middleware("http")(require_payment(path=path, **config))
+    # Create a single smart middleware that dynamically handles each route
+    class SmartPaymentMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            path = request.url.path
+
+            # Check if this path requires payment
+            if path in route_configs:
+                config = route_configs[path]
+                # Create the payment middleware for THIS specific request
+                payment_middleware = require_payment(path=path, **config)
+                # Invoke it directly with the ASGI interface
+                return await payment_middleware(
+                    request.scope, request.receive, request._send
+                )
+
+            # No payment required, continue normally
+            return await call_next(request)
+
+    # Register only ONE middleware instance
+    app.add_middleware(SmartPaymentMiddleware)
