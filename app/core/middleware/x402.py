@@ -1,10 +1,8 @@
 import os
 from typing import Callable
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute
 from dotenv import load_dotenv
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
 from x402.fastapi.middleware import require_payment
 from x402.facilitator import FacilitatorConfig
 from x402.types import HTTPInputSchema
@@ -22,8 +20,9 @@ facilitator_config = FacilitatorConfig(url=FACILITATOR_URL)
 
 
 def apply_payment_middleware(app: FastAPI):
-    # Collect all route configs first
-    route_configs = {}
+    # Collect all route configs and pre-create payment handlers
+    payment_handlers = {}
+
     for route in app.routes:
         if isinstance(route, APIRoute) and hasattr(route.endpoint, "x402_config"):
             config = route.endpoint.x402_config
@@ -44,7 +43,7 @@ def apply_payment_middleware(app: FastAPI):
                     header_fields={},
                 )
 
-            route_configs[route.path] = {
+            route_config = {
                 "price": config["price"],
                 "pay_to_address": ADDRESS,
                 "network": "base",
@@ -54,8 +53,17 @@ def apply_payment_middleware(app: FastAPI):
                 "facilitator_config": facilitator_config,
             }
 
-    # Register middleware for each protected route
-    # Each require_payment middleware only processes requests for its specific path
-    # The x402 library handles path matching internally
-    for path, config in route_configs.items():
-        app.middleware("http")(require_payment(path=path, **config))
+            path = route.path
+            # Pre-create the require_payment handler for this path
+            payment_handlers[path] = require_payment(path=path, **route_config)
+
+    # Create a single middleware that routes to appropriate payment handler
+    @app.middleware("http")
+    async def x402_middleware(request: Request, call_next: Callable):
+        path = request.url.path
+
+        if path in payment_handlers:
+            require_payment_middleware = payment_handlers[path]
+            return await require_payment_middleware(request, call_next)
+
+        return await call_next(request)

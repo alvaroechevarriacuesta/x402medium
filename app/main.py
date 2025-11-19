@@ -9,28 +9,7 @@ from app.api.user import router as user_router
 from app.core.middleware.x402 import apply_payment_middleware
 
 
-class CacheRequestBodyMiddleware(BaseHTTPMiddleware):
-    """Cache request body so it can be read multiple times by different middlewares"""
-
-    async def dispatch(self, request: Request, call_next):
-        # Cache the body by reading it once and storing it
-        body = await request.body()
-
-        # Create a new receive function that returns the cached body
-        async def receive():
-            return {"type": "http.request", "body": body}
-
-        # Replace the receive function with our cached version
-        request._receive = receive
-
-        response = await call_next(request)
-        return response
-
-
 app = FastAPI()
-
-# Add body caching middleware FIRST, before x402 middlewares
-app.add_middleware(CacheRequestBodyMiddleware)
 
 app.include_router(article_router)
 app.include_router(list_router)
