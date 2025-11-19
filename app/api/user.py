@@ -13,11 +13,24 @@ from app.clients.medium.user import get_user_lists as fetch_user_lists
 from app.clients.medium.user import get_user_publications as fetch_user_publications
 from app.clients.medium.user import get_user_books as fetch_user_books
 
+from app.core.middleware.payment import x402
+
 
 router = APIRouter(prefix="/user", tags=["user"])
 
 
 @router.get("/id_for")
+@x402(
+    price="0.01",
+    description="Get the user_id for a username on Medium",
+    query_params={
+        "username": {
+            "type": "string",
+            "description": "The username of the user to get the user_id for",
+            "required": True,
+        }
+    },
+)
 async def get_user(request: Request):
     params = request.query_params
     username = params.get("username")
