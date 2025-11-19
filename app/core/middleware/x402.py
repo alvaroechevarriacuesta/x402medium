@@ -54,33 +54,8 @@ def apply_payment_middleware(app: FastAPI):
                 "facilitator_config": facilitator_config,
             }
 
-    # Pre-create payment handlers for each route
-    payment_handlers = {}
+    # Register middleware for each protected route
+    # Each require_payment middleware only processes requests for its specific path
+    # The x402 library handles path matching internally
     for path, config in route_configs.items():
-        # require_payment returns a middleware function
-        payment_handlers[path] = require_payment(path=path, **config)
-
-    # Create ONE unified middleware that routes to appropriate payment handler
-    class UnifiedPaymentMiddleware:
-        def __init__(self, handlers: dict):
-            self.handlers = handlers
-
-        async def __call__(self, scope, receive, send):
-            if scope["type"] != "http":
-                # Not HTTP, skip
-                return await app.app(scope, receive, send)
-
-            path = scope["path"]
-
-            # Check if this path requires payment
-            if path in self.handlers:
-                # Delegate to the specific payment handler for this path
-                handler = self.handlers[path]
-                return await handler(scope, receive, send)
-
-            # No payment required, continue to next middleware/handler
-            return await app.app(scope, receive, send)
-
-    # Register ONE middleware instance that handles all routes
-    middleware_instance = UnifiedPaymentMiddleware(payment_handlers)
-    app.middleware("http")(middleware_instance)
+        app.middleware("http")(require_payment(path=path, **config))
