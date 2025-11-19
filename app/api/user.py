@@ -39,96 +39,231 @@ async def get_user(request: Request):
     return await fetch_user_by_username(username)
 
 
-@router.get("/articles")
+@router.post("/articles")
+@x402(
+    price="0.01",
+    description="Get articles for a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get articles for",
+            "required": True,
+        },
+        "next": {
+            "type": "string",
+            "description": "Pagination cursor for next page of results",
+            "required": False,
+        },
+    },
+)
 async def get_user_articles(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
-    next = params.get("next", None)
+    next = body.get("next", None)
     return await fetch_user_articles(user_id, next)
 
 
-@router.get("/top_articles")
+@router.post("/top_articles")
+@x402(
+    price="0.01",
+    description="Get top articles for a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get top articles for",
+            "required": True,
+        }
+    },
+)
 async def get_user_top_articles(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
     return await fetch_user_top_articles(user_id)
 
 
-@router.get("/following")
+@router.post("/following")
+@x402(
+    price="0.01",
+    description="Get users followed by a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get following for",
+            "required": True,
+        },
+        "next": {
+            "type": "string",
+            "description": "Pagination cursor for next page of results",
+            "required": False,
+        },
+    },
+)
 async def get_user_following(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
-    next = params.get("next", None)
+    next = body.get("next", None)
     return await fetch_user_following(user_id, next)
 
 
-@router.get("/publication_following")
+@router.post("/publication_following")
+@x402(
+    price="0.01",
+    description="Get publications followed by a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get publication following for",
+            "required": True,
+        },
+        "next": {
+            "type": "string",
+            "description": "Pagination cursor for next page of results",
+            "required": False,
+        },
+    },
+)
 async def get_user_publication_following(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
-    next = params.get("next", None)
+    next = body.get("next", None)
     return await fetch_user_publication_following(user_id, next)
 
 
-@router.get("/followers")
+@router.post("/followers")
+@x402(
+    price="0.01",
+    description="Get followers of a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get followers for",
+            "required": True,
+        },
+        "next": {
+            "type": "string",
+            "description": "Pagination cursor for next page of results",
+            "required": False,
+        },
+        "count": {
+            "type": "string",
+            "description": "Number of followers to retrieve",
+            "required": False,
+        },
+    },
+)
 async def get_user_followers(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
-    next = params.get("next", None)
-    count = params.get("count", None)
+    next = body.get("next", None)
+    count = body.get("count", None)
     return await fetch_user_followers(user_id, next, count)
 
 
-@router.get("/interests")
+@router.post("/interests")
+@x402(
+    price="0.01",
+    description="Get interests of a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get interests for",
+            "required": True,
+        }
+    },
+)
 async def get_user_interests(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
     return await fetch_user_interests(user_id)
 
 
-@router.get("/lists")
+@router.post("/lists")
+@x402(
+    price="0.01",
+    description="Get lists created by a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get lists for",
+            "required": True,
+        }
+    },
+)
 async def get_user_lists(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
     return await fetch_user_lists(user_id)
 
 
-@router.get("/publications")
+@router.post("/publications")
+@x402(
+    price="0.01",
+    description="Get publications created by a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get publications for",
+            "required": True,
+        }
+    },
+)
 async def get_user_publications(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
     return await fetch_user_publications(user_id)
 
 
-@router.get("/books")
+@router.post("/books")
+@x402(
+    price="0.01",
+    description="Get books created by a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get books for",
+            "required": True,
+        }
+    },
+)
 async def get_user_books(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
     return await fetch_user_books(user_id)
 
 
-@router.get("")
+@router.post("")
+@x402(
+    price="0.01",
+    description="Get detailed information about a Medium user",
+    body_fields={
+        "user_id": {
+            "type": "string",
+            "description": "The user_id of the user to get info for",
+            "required": True,
+        }
+    },
+)
 async def get_user_info(request: Request):
-    params = request.query_params
-    user_id = params.get("user_id")
+    body = await request.json()
+    user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
     return await fetch_user_info(user_id)
