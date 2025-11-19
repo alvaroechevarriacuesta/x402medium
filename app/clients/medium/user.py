@@ -40,11 +40,11 @@ async def get_user_publication_following(user_id: str, next: str = None):
     return await medium_request(path, method="GET", params=params)
 
 
-async def get_user_followers(user_id: str, next: str = None, count: int = None):
+async def get_user_followers(user_id: str, after: str = None, count: int = None):
     path = f"/user/{user_id}/followers"
     params = {}
-    if next is not None:
-        params["next"] = next
+    if after is not None:
+        params["after"] = after
     if count is not None:
         if count > 25:
             count = 25

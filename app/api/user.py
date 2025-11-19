@@ -147,14 +147,14 @@ async def get_user_publication_following(request: Request):
             "description": "The user_id of the user to get followers for",
             "required": True,
         },
-        "next": {
+        "after": {
             "type": "string",
-            "description": "Pagination cursor for next page of results",
+            "description": "To get the results after a particular follower's user id",
             "required": False,
         },
         "count": {
-            "type": "string",
-            "description": "Number of followers to retrieve",
+            "type": "integer",
+            "description": "Number of followers to retrieve (count <= 25)",
             "required": False,
         },
     },
@@ -164,9 +164,9 @@ async def get_user_followers(request: Request):
     user_id = body.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=400, detail="user_id is required")
-    next = body.get("next", None)
+    after = body.get("after", None)
     count = body.get("count", None)
-    return await fetch_user_followers(user_id, next, count)
+    return await fetch_user_followers(user_id, after, count)
 
 
 @router.post("/interests")
