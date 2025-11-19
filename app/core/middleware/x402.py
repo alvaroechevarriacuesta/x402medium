@@ -26,11 +26,18 @@ def apply_payment_middleware(app: FastAPI):
             config = route.endpoint.x402_config
 
             input_schema = None
-            if config.get("body_fields"):
+            body_fields = config.get("body_fields")
+            query_params = config.get("query_params")
+
+            # Only create schema if there are actual fields defined (not empty dict)
+            has_body_fields = body_fields and len(body_fields) > 0
+            has_query_params = query_params and len(query_params) > 0
+
+            if has_body_fields or has_query_params:
                 input_schema = HTTPInputSchema(
-                    body_type="json",
-                    body_fields=config["body_fields"],
-                    query_params={},
+                    body_type="json" if has_body_fields else None,
+                    body_fields=body_fields if has_body_fields else {},
+                    query_params=query_params if has_query_params else {},
                     header_fields={},
                 )
 

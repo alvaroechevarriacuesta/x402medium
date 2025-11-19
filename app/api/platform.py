@@ -181,7 +181,6 @@ async def get_tag_info(request: Request):
 @x402(
     price="0.01",
     description="Get root tags on Medium",
-    body_fields={},
 )
 async def get_root_tags(request: Request):
     return await fetch_root_tags()
