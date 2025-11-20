@@ -69,11 +69,12 @@ def apply_payment_middleware(app: FastAPI):
         body = await request.body()
         print(f"Request body: {body.decode('utf-8') if body else 'Empty'}")
 
-        # If body is empty or just whitespace, replace with empty JSON object
-        # This prevents JSON parsing errors in x402 middleware when body_fields expects JSON
         if not body or not body.strip():
             body = b"{}"
             print(f"Empty body detected, replacing with: {body.decode('utf-8')}")
+
+        # Update cached body so downstream request.json() sees the replacement
+        request._body = body
 
         # Restore body so it can be read again
         async def receive():
